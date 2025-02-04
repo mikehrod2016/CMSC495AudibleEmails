@@ -1,0 +1,21 @@
+{
+    "manifest_version": 3,
+    "name": "Voice-Based Email",
+    "version": "1.0",
+    "description": "A Chrome extension for managing emails using voice commands.",
+    "permissions": ["storage", "identity", "tabs", "activeTab"],
+    "host_permissions": ["https://mail.google.com/*"],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "action": {
+      "default_popup": "popup.html",
+      "default_icon": "images/icon.png"
+    },
+    "content_scripts": [
+      {
+        "matches": ["https://mail.google.com/*"],
+        "js": ["content.js"]
+      }
+    ]
+  }
