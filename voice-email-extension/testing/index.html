@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Audible Email Testing</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mocha/8.3.2/mocha.css">
+</head>
+<body>
+<div id="mocha"></div>
+
+<!-- embed extension popup -->
+<div style="display: flex; justify-content: center; margin: 20px 0;">
+    <iframe id="extension-popup" src="../popup.html" style="width: 300px; height: 400px; border: 1px solid #ccc;"></iframe>
+</div>
+
+<!-- testing libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mocha/8.3.2/mocha.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chai/4.3.4/chai.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sinon.js/9.2.4/sinon.js"></script>
+
+<!-- mock chrome api -->
+<script>
+    window.chrome = {
+        runtime: {
+            onMessage: {
+                addListener: function(callback) {
+                    window.addEventListener('message', (event) => {
+                        if (event.data.type === 'chromeMessage') {
+                            callback(event.data.message);
+                        }
+                    });
+                }
+            },
+            sendMessage: function(message) {
+                window.postMessage({ type: 'chromeMessage', message }, '*');
+            }
+        },
+        tabs: {
+            create: function() {},
+            query: function() {}
+        }
+    };
+</script>
+
+<!-- test file -->
+<script>
+    mocha.setup('bdd');
+    const expect = chai.expect;
+
+    describe('Extension Popup Tests', () => {
+        let popup;
+        let startButton;
+
+        before(() => {
+            popup = document.getElementById('extension-popup');
+            // wait for iframe (extension) to load
+            return new Promise((resolve) => {
+                popup.onload = () => {
+                    startButton = popup.contentDocument.getElementById('startListening');
+                    resolve();
+                };
+            });
+        });
+
+        it('should have a start listening button', () => {
+            expect(startButton).to.exist;
+        });
+
+        it('should trigger voice recognition when button is clicked', (done) => {
+            let messageReceived = false;
+
+            chrome.runtime.onMessage.addListener((message) => {
+                if (message.action === 'startListening') {
+                    messageReceived = true;
+                    done();
+                }
+            });
+
+            startButton.click();
+
+            // fail if no message received w/in 1 sec
+            setTimeout(() => {
+                if (!messageReceived) {
+                    done(new Error('No startListening message received'));
+                }
+            }, 1000);
+        });
+    });
+
+    mocha.run();
+</script>
+</body>
+</html>
