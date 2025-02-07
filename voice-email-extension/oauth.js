@@ -1,3 +1,4 @@
+//Handles OAuth authentication
 const CLIENT_ID = "YOUR_CLIENT_ID.apps.googleusercontent.com";
 const SCOPES = "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send";
 

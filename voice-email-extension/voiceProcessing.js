@@ -1,3 +1,4 @@
+//Handles speech recognition
 const startVoiceRecognition = () => {
     if (!("webkitSpeechRecognition" in window)) {
         alert("Your browser does not support speech recognition.");

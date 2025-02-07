@@ -1,4 +1,4 @@
-
+//Sends emails via Gmail API
 const sendReply = (messageId, message) => {
     chrome.storage.local.get("accessToken", (data) => {
         fetch(`https://www.googleapis.com/gmail/v1/users/me/messages/${messageId}`, {

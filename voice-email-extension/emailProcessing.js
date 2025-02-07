@@ -1,3 +1,4 @@
+//Fetches and replies to emails
 const sendEmail = (recipient, subject, message) => {
     const email = {
         to: recipient,

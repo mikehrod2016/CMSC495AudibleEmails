@@ -1,3 +1,4 @@
+//Text-to-speech functionality
 const readTextAloud = (text) => {
     if (!window.speechSynthesis) {
         alert("Your browser does not support text-to-speech.");
