@@ -22,6 +22,7 @@ const startVoiceRecognition = () => {
 
     recognition.onerror = (event) => {
         document.getElementById("status").innerText = "Error. Try again.";
+        console.error("Voice Recognition Error:", event.error);
     };
 
     recognition.start();
@@ -30,10 +31,15 @@ const startVoiceRecognition = () => {
 const processCommand = (command) => {
     if (command.includes("compose email")) {
         chrome.tabs.create({ url: "https://mail.google.com/mail/u/0/#inbox?compose=new" });
-    } else if (command.includes("read emails")) {
-        fetchEmails();
+    } else if (command.includes("read my latest email")) {
+        fetchLatestEmail();
+    } else if (command.includes("delete my last email")) {
+        deleteLatestEmail();
+    } else if (command.includes("save draft")) {
+        saveDraft();
+    } else if (command.includes("mark my last email as read")) {
     } else {
-        alert("Command not recognized.");
+        alert("Command not recognized. Please try again.");
     }
 };
 
