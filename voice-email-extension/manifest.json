@@ -5,6 +5,13 @@
     "description": "A Chrome extension for managing emails using voice commands.",
     "permissions": ["storage", "identity", "tabs", "activeTab"],
     "host_permissions": ["https://mail.google.com/*"],
+    "oauth2": {
+        "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
+        "scopes": [
+            "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/gmail.send"
+        ]
+    },
     "background": {
       "service_worker": "background.js"
     },
