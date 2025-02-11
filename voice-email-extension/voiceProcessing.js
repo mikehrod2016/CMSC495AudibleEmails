@@ -11,17 +11,17 @@ const startVoiceRecognition = () => {
     recognition.lang = "en-US";
 
     recognition.onstart = () => {
-        console.log("Listening...");
+        document.getElementById("status").innerText = "Listening...";
     };
 
     recognition.onresult = (event) => {
         let command = event.results[0][0].transcript.toLowerCase();
-        console.log("Command received:", command);
+        document.getElementById("status").innerText = `Heard: ${command}`;
         processCommand(command);
     };
 
     recognition.onerror = (event) => {
-        console.error("Error:", event.error);
+        document.getElementById("status").innerText = "Error. Try again.";
     };
 
     recognition.start();
@@ -31,7 +31,7 @@ const processCommand = (command) => {
     if (command.includes("compose email")) {
         chrome.tabs.create({ url: "https://mail.google.com/mail/u/0/#inbox?compose=new" });
     } else if (command.includes("read emails")) {
-        alert("Reading latest email... (Feature in Progress)");
+        fetchEmails();
     } else {
         alert("Command not recognized.");
     }
