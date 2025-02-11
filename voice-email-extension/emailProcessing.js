@@ -1,23 +1,19 @@
 //Fetches and replies to emails
-const sendEmail = (recipient, subject, message) => {
-    const email = {
-        to: recipient,
-        subject: subject,
-        body: message
-    };
+const fetchEmails = () => {
+    chrome.storage.local.get("accessToken", (data) => {
+        if (!data.accessToken) {
+            alert("Please log in first!");
+            return;
+    }
 
     fetch("https://www.googleapis.com/gmail/v1/users/me/messages/send", {
-        method: "POST",
-        headers: {
-            "Authorization": `Bearer ${accessToken}`, // OAuth2 Token
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(email)
-    }).then(response => {
-        if (response.ok) {
-            alert("Email sent successfully!");
-        } else {
-            alert("Failed to send email.");
-        }
+        headers: { Authorization: `Bearer ${data.accessToken}` }
+    })
+    .then(response => response.json() )
+    .then(data => {
+        console.log("Emails:", data);
+        alert(`Fetched ${data.messages.length} emails!`);
+        })
+    .catch(error => console.error("Error fetching emails:", error));
     });
 };
