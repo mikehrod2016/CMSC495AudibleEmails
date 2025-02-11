@@ -1,33 +1,31 @@
 //Sends emails via Gmail API
+const composeEmailWithVoice = () => {
+    let recipient = prompt("Speak the recipient's email address:");
+    if (!recipient) return;
+
+    let subject = prompt("Speak the subject:");
+    if (!subject) return;
+
+    let body = prompt("Speak the message body:");
+    if (!body) return;
+
+    sendEmail(recipient, subject, body);
+};
+
 const sendEmail = (recipient, subject, message) => {
     chrome.storage.local.get("accessToken", (data) => {
-        if (!data.accessToken) {
-            alert("Please log in first!");
-            return;
-        }
+        let emailContent = `To: ${recipient}\nSubject: ${subject}\n\n${message}`;
+        let encodedEmail = btoa(emailContent).replace(/\+/g, '-').replace(/\//g, '_');
 
-        const emailContent = `
-            To: ${recipient}
-            Subject: ${subject}
-
-            ${message}
-        .trim();
-
-        const base64Email = btoa(emailContent).replace(/\+g, '-'.).replace(/\+/g, '-').replace(/\//g, '-');
-        
-        fetch(`https://www.googleapis.com/gmail/v1/users/me/messages/${messageId}`, {
+        fetch("https://www.googleapis.com/gmail/v1/users/me/messages/send", {
             method: "POST",
-            headers: { 
+            headers: {
                 Authorization: `Bearer ${data.accessToken}`,
-                    "Content-Type: "application/json"
+                "Content-Type": "application/json"
             },
-            body: JSON.stringify({ raw: base64Email })    
+            body: JSON.stringify({ raw: encodedEmail })
         })
-        .then(response => response.json())
-        .then(email => {
-           console.log("Email sent!", data);
-            alert("Email Sent Successfully!");
-        })
+        .then(() => alert("Email sent successfully!"))
         .catch(error => console.error("Error sending email:", error));
     });
-
+};
