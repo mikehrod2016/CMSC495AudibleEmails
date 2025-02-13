@@ -6,7 +6,7 @@
     "permissions": ["storage", "identity", "tabs", "activeTab"],
     "host_permissions": ["https://mail.google.com/*", "https://*.google.com/*"],
     "oauth2": {
-        "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
+        "client_id": "513971049060-t16a4kq6tf3vu7uaqmosubn38ja0pe8o.apps.googleusercontent.com",
         "scopes": [
             "https://www.googleapis.com/auth/gmail.readonly",
             "https://www.googleapis.com/auth/gmail.send",

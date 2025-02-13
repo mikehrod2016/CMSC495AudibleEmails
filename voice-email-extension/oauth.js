@@ -1,22 +1,86 @@
-//Handles OAuth authentication
-const CLIENT_ID = "YOUR_CLIENT_ID.apps.googleusercontent.com";
-const SCOPES = "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send";
-
-function authenticateUser() {
-    chrome.identity.launchWebAuthFlow(
-        {
-            url: `https://accounts.google.com/o/oauth2/auth?client_id=${CLIENT_ID}&response_type=token&redirect_uri=urn:ietf:wg:oauth:2.0:oob&scope=${SCOPES}`,
-            interactive: true
-        },
-        (redirectURL) => {
-            if (chrome.runtime.lastError || !redirectURL) {
-                console.error("OAuth Failed", chrome.runtime.lastError);
-                return;
-            }
-            const token = new URL(redirectURL).hash.split("&")[0].split("=")[1];
-            chrome.storage.local.set({ accessToken: token }, () => {
-                console.log("OAuth Successful!");
+// shared function to check login status
+async function checkLoginStatus() {
+    try {
+        const token = await new Promise((resolve, reject) => {
+            chrome.identity.getAuthToken({ interactive: false }, (token) => {
+                if (chrome.runtime.lastError) {
+                    reject(chrome.runtime.lastError);
+                    return;
+                }
+                resolve(token);
             });
-        }
-    );
+        });
+
+        const response = await fetch('https://www.googleapis.com/gmail/v1/users/me/profile', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        return { isLoggedIn: true, email: data.emailAddress };
+    } catch (error) {
+        console.error('Auth check error:', error);
+        return { isLoggedIn: false, email: null };
+    }
 }
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // check if on settings page
+    const loginButton = document.getElementById('loginButton');
+    const logoutButton = document.getElementById('logoutButton');
+
+    // check if on popup page
+    const loginStatus = document.getElementById('loginStatus');
+
+    // check login status regardless of page
+    const { isLoggedIn, email } = await checkLoginStatus();
+
+    if (loginButton && logoutButton) {  // were on settings page
+        if (isLoggedIn) {
+            loginButton.textContent = `Logged in as ${email}`;
+            logoutButton.style.display = 'block';
+        }
+
+        // login handler
+        loginButton.addEventListener('click', async () => {
+            try {
+                const token = await new Promise((resolve, reject) => {
+                    chrome.identity.getAuthToken({ interactive: true }, (token) => {
+                        if (chrome.runtime.lastError) {
+                            reject(chrome.runtime.lastError);
+                            return;
+                        }
+                        resolve(token);
+                    });
+                });
+
+                const response = await fetch('https://www.googleapis.com/gmail/v1/users/me/profile', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+
+                loginButton.textContent = `Logged in as ${data.emailAddress}`;
+                logoutButton.style.display = 'block';
+            } catch (error) {
+                console.error('Auth error:', error);
+                loginButton.textContent = 'Login Failed - Try Again';
+            }
+        });
+
+        // logout handler
+        logoutButton.addEventListener('click', async () => {
+            try {
+                chrome.identity.getAuthToken({ interactive: false }, (token) => {
+                    chrome.identity.removeCachedAuthToken({ token }, () => {
+                        loginButton.textContent = 'Login with Google';
+                        logoutButton.style.display = 'none';
+                    });
+                });
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        });
+    }
+
+    if (loginStatus) {  // were on popup page
+        loginStatus.textContent = isLoggedIn ? `Logged in as ${email}` : 'Not logged in';
+    }
+});
