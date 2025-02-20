@@ -28,15 +28,36 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Controls UI logic
     document.getElementById("fetchEmails").addEventListener("click", fetchFirstFiveEmails);
-    document.getElementById("startListening").addEventListener("click", startVoiceRecognition);
-    document.getElementById("stopSpeaking").addEventListener("click", () => {
-        chrome.runtime.sendMessage({ action: "startListening" });
-    });
 
     // opens full-page tab
     document.getElementById('openPage').addEventListener('click', function() {
         chrome.tabs.create({
             url: '/settings.html'
         });
+    });
+
+    let settingsPageId = null;
+    
+    document.getElementById("startListening").addEventListener("click", () => {
+        if (settingsPageId) {
+            chrome.tabs.sendMessagee(settingsPageId, { action: "startListening" });
+        }
+        else {
+            chrome.tabs.create({ url: "/settings.html" }, (tab) => {
+                settingsPageId = tab.id;
+            });
+        }
+    });
+
+    document.getElementById("stopSpeaking").addEventListener("click", () => {
+        if (settingsPageId) {
+            chrome.tabs.sendMessage(settingsPageId, { action: "stopSpeaking" });
+        }
+    });
+
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        if (message.action === "voiceCommand") {
+            document.getElementById("status").textContent = `Heard: ${message.command}`;
+        }
     });
 });
