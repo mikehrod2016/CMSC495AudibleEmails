@@ -1,25 +1,30 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // check login status when page loads
-    chrome.identity.getAuthToken({ interactive: false }, (token) => {
-        const loginStatus = document.getElementById('loginStatus');
-        if (chrome.runtime.lastError || !token) {
-            loginStatus.textContent = 'Not logged in';
-            return;
-        }
-
-        // if token exists, get email address
-        fetch('https://www.googleapis.com/gmail/v1/users/me/profile', {
-            headers: { 'Authorisation': `Bearer ${token}` }
-        })
-            .then(response => response.json())
-            .then(data => {
-                loginStatus.textContent = `Logged in as ${data.emailAddress}`;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                loginStatus.textContent = 'Error checking login status';
+document.addEventListener('DOMContentLoaded', async () => {
+    const loginStatus = document.getElementById('loginStatus');
+    try {
+        // request oauth token from background.js
+        const token = await new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage({ action: 'getAuthToken', interactive: true }, (response) => {
+                if (response.error) {
+                    reject(response.error); // reject if error
+                }
+                else {
+                    resolve(response.token); // resolve with received token
+                }
             });
-    });
+        });
+
+        // fetch user profile from gmail api using received token
+        const response = await fetch('https://www.googleapis.com/gmail/v1/users/me/profile', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await response.json();
+        loginStatus.textContent = `Logged in as ${data.emailAddress}`;
+    }
+    catch (error) {
+        console.error('Error:', error);
+        loginStatus.textContent = 'Not logged in';
+    }
 
     // Controls UI logic
     document.getElementById("fetchEmails").addEventListener("click", fetchFirstFiveEmails);
