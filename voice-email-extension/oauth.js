@@ -1,25 +1,40 @@
-// shared function to check login status
+// check if user is logged in
 async function checkLoginStatus() {
     try {
-        const token = await new Promise((resolve, reject) => {
-            chrome.identity.getAuthToken({ interactive: false }, (token) => {
-                if (chrome.runtime.lastError) {
-                    reject(chrome.runtime.lastError);
-                    return;
-                }
-                resolve(token);
-            });
-        });
+        // request oauth token from background.js
+        const token = await getAuthToken();
 
+        // fetch users gmail profile to check if login was successful
         const response = await fetch('https://www.googleapis.com/gmail/v1/users/me/profile', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
+
         const data = await response.json();
+
+        // return login status and users email
         return { isLoggedIn: true, email: data.emailAddress };
-    } catch (error) {
+    }
+    catch (error) {
         console.error('Auth check error:', error);
+
+        // return false if auth fails
         return { isLoggedIn: false, email: null };
     }
+}
+
+// request oauth token from background.js
+async function getAuthToken(interactive = false) {
+    return new Promise((resolve, reject) => {
+        // send message to background.js to request a token
+        chrome.runtime.sendMessage({ action: 'getAuthToken', interactive }, (response) => {
+            if (response.error) {
+                reject(response.error); // reject if error
+            }
+            else {
+                resolve(response.token); // resolve with received token
+            }
+        });
+    });
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
