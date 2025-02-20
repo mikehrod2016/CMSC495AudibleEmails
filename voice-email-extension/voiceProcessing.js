@@ -24,23 +24,23 @@ const startVoiceRecognition = () => {
             recognition.start();
         })
         .catch(error => {
-            document.getElementById("status").innerText = "Microphone permission denied";
             console.error("Microphone permission error:", error);
+            chrome.runtime.sendMessage({ action: "micError" });
         });
 };
 
 const setupRecognitionHandlers = () => {
     recognition.onstart = () => {
-        document.getElementById("status").innerText = "Listening...";
+        chrome.runtime.sendMessage({ action: "statusUpdate", status: "Listening..." });
     };
 
     recognition.onend = () => {
-        document.getElementById("status").innerText = "Voice recognition ended";
-    };
+        chrome.runtime.sendMessage({ action: "statusUpdate", status: "Voice recognition ended." });    };
 
     recognition.onresult = (event) => {
         let command = event.results[0][0].transcript.toLowerCase();
-        document.getElementById("status").innerText = `Heard: ${command}`;
+        console.log("Recognized CommandL", command);
+        chrome.runtime.sendMessage({ action: "voiceCommand", command });
         processCommand(command);
     };
 
@@ -60,7 +60,7 @@ const setupRecognitionHandlers = () => {
             default:
                 errorMessage += event.error;
         }
-        document.getElementById("status").innerText = errorMessage;
+        chrome.runtime.sendMessage({ action: "statusUpdate", status: errorMessage });
         console.error("Voice Recognition Error:", event.error);
     };
 };
@@ -82,13 +82,16 @@ const processCommand = (command) => {
     if (matchedCommand) {
         matchedCommand[1]();
     } else {
-        document.getElementById("status").innerText = "Command not recognized. Please try again.";
-    }
+        chrome.runtime.sendMessage({ action: "statusUpdate", status: "Command not recognized." });    }
 };
 
 // listen for messages from other parts of the extension
 chrome.runtime.onMessage.addListener((message) => {
     if (message.action === "startListening") {
         startVoiceRecognition();
+    }
+    else if (message.action === "stopListening") {
+        recognition.stop();
+        chrome.runtime.sendMessage({ action: "statusUpdate", status: "Voice recognition stopped." });
     }
 });

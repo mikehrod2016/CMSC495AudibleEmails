@@ -28,10 +28,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Controls UI logic
     document.getElementById("fetchEmails").addEventListener("click", fetchFirstFiveEmails);
-    document.getElementById("startListening").addEventListener("click", startVoiceRecognition);
-    document.getElementById("stopSpeaking").addEventListener("click", () => {
-        chrome.runtime.sendMessage({ action: "startListening" });
-    });
 
     // opens full-page tab
     document.getElementById('openPage').addEventListener('click', function() {
@@ -39,4 +35,99 @@ document.addEventListener('DOMContentLoaded', async () => {
             url: '/settings.html'
         });
     });
+
+    // get stored settings page id when popup opens
+    chrome.storage.local.get("settingsPageId"), (data) => {
+        if (data.settingsPageId) {
+            settingsPageId = data.settingsPageId;
+        }
+    };
+
+    // store settings page id of settings.html
+    let settingsPageId = null;
+
+    chrome.storage.local.get("settingsPageId", (data) => {
+        if (data.settingsPageId) {
+            settingsPageId = data.settingsPageId;
+        }
+    });
+
+    function openSettingsPage() {
+        chrome.tabs.query({}, (tabs) => {
+            let existingPage = tabs.find(tab => tab.url && tab.url.includes("settings.html"));
+            if (existingPage) {
+                settingsPageId = existingPage.id;
+                chrome.storage.local.set({ settingsPageId: settingsTabId });
+
+                // bring tab to focus instead of opening new one
+                chrome.tabs.update(settingsPageId, { active: true });
+            }
+            else {
+                chrome.tabs.create({ url: "settings.html" }, (tab) => {
+                    settingsPageId = tab.id;
+                    chrome.storage.local.set({ settingsPageId: tab.id });
+                });
+            }
+        });
+    }
+
+    document.getElementById("startListening").addEventListener("click", () => {
+        event.preventDefault();
+        // check if settings.html is already open
+        if (settingsPageId) {
+            // if tab exists, send message to start listening
+            chrome.tabs.sendMessage(settingsPageId, { action: "startListening" }, (response) => {
+                if (chrome.runtime.lastError) {
+                    console.log("Settings tab not found, opening a new one.");
+                    openSettingsPage();
+                }
+            });
+        } else {
+            // open new tab if not found
+            openSettingsPage();
+        }
+    });
+    
+
+    document.getElementById("stopSpeaking").addEventListener("click", () => {
+        if (settingsPageId) {
+            chrome.tabs.sendMessage(settingsPageId, { action: "stopSpeaking" });
+        }
+    });
+
+    // listen for messages from settings.html
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        if (message.action === "voiceCommand") {
+            document.getElementById("status").textContent = `Heard: ${message.command}`;
+            document.getElementById("recognisedCommand").textContent = `Last Command: ${message.command}`; // for debugging
+        }
+        else if (message.action === "statusUpdate") {
+            document.getElementById("status").textContent = message.status;
+        }
+        else if (message.action === "micError") {
+            // todo: figure out why the hell this is triggering initially
+            //       once prompt is closed the voice command is processed as designed
+            
+            // alert("Microphone access denied. Enable microphone access in your browser settings.");
+        }
+
+        // store settingsPageId if message is coming from settings.html
+        if (sender.tab && sender.tab.url.includes("settings.html")) {
+            settingsPageId = sender.tab.id;
+            chrome.storage.local.set({ settingsPageId: sender.tab.id });
+        }
+    });
+
+    // handle page closure to reset stored page id
+    chrome.tabs.onRemoved.addListener((tabId) => {
+        if (tabId === settingsPageId) {
+            settingsPageId = null;
+            chrome.storage.local.remove("settingsPageId");
+        }
+    });
+
+    window.onblur = () => {
+        window.focus();
+    };
+
 });
