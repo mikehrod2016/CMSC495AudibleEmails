@@ -1,0 +1,146 @@
+body {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    background-color: #f8f9fa;
+    margin: 10px;
+}
+
+#popup {
+    width: 400px;
+    min-height: 500px;
+    overflow: hidden;
+}
+
+.settings-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.login-status-card {
+    display: flex;
+    align-items: center;
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 12px 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.login-indicator {
+    margin-right: 12px;
+    position: relative;
+}
+
+.status-icon {
+    font-size: 2rem;
+    color: #6c757d;
+}
+
+.login-status-card.logged-in .status-icon {
+    color: #28a745;
+}
+
+.login-status-card.not-logged-in .status-icon {
+    color: #dc3545;
+}
+
+.fetch-btn {
+    margin-left: auto;
+}
+
+.voice-controls .btn {
+    padding: 15px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.voice-controls .btn i {
+    margin-right: 8px;
+    font-size: 1.2rem;
+}
+
+.voice-controls .btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.voice-controls .btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.voice-controls .btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.voice-controls .btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.message-display {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    min-height: 15px;
+}
+
+.message-header {
+    background-color: #007bff;
+    color: #fff;
+    padding: 8px 15px;
+    font-weight: 600;
+}
+
+.message-content {
+    padding: 15px;
+    min-height: 120px;
+}
+
+.status-message {
+    font-size: 1.1rem;
+    color: #007bff;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.command-message {
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.listening .btn-success {
+    animation: pulse 1.5s infinite;
+    background-color: #20c997;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(32, 201, 151, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(32, 201, 151, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(32, 201, 151, 0);
+    }
+}
+
+/* responsive adjustments */
+@media (max-width: 400px) {
+    .voice-controls .btn {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+
+    .voice-controls .btn i {
+        font-size: 1rem;
+    }
+}

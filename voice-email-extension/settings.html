@@ -1,19 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voice Email Settings</title>
-    <link rel="stylesheet" href="styles.css">
-  </head>
-  <body>
-    <h2>Voice Email Settings</h2>
-    <button id="loginButton" class="button">Login with Google</button>
-    <button id="logoutButton" class="button">Logout</button>
-    <script src="oauth.js"></script>
-    <script src="tts.js"></script>
-    <script src="emailProcessing.js"></script>
-    <script src="voiceProcessing.js"></script>
-    <script src="settings.js"></script>
-  </body>
+    <link rel="stylesheet" href="bootstrap/bootstrap.css">
+    <link rel="stylesheet" href="fontawesome/css/all.css">
+    <link rel="stylesheet" href="styles-settings.css">
+</head>
+<body class="py-5">
+<div class="settings-container">
+    <h2 class="text-center mb-4">Voice Email Settings</h2>
+    <div class="settings-section">
+        <h4 class="mb-3">Account</h4>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <p id="accountStatus" class="mb-1">Not logged in</p>
+                <small class="text-muted">Connect your Google account to use voice email</small>
+            </div>
+            <div>
+                <button id="loginButton" class="btn btn-success">
+                    <i class="fas fa-sign-in-alt"></i> Login with Google </button>
+                <button id="logoutButton" class="btn btn-danger" style="display:none;">
+                    <i class="fas fa-sign-out-alt"></i> Logout </button>
+            </div>
+        </div>
+    </div>
+    <div class="settings-section">
+        <h4 class="mb-3">Display Options</h4>
+        <div class="mb-3">
+            <label for="iconsToggle" class="d-flex justify-content-between align-items-center">
+                <span>Show Icons</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="iconsToggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </label>
+            <small class="text-muted d-block mt-1">Toggle between text-only and text+icon modes</small>
+        </div>
+        <div class="mb-3">
+            <div class="display-preview">
+                <h5>Preview:</h5>
+                <button class="btn btn-primary btn-sm preview-button">
+                    <i class="fas fa-microphone preview-icon"></i>
+                    <span class="preview-text">Start Voice Command</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="settings-section">
+        <h4 class="mb-3">Voice Command Settings</h4>
+        <div class="mb-3">
+            <label for="voiceSensitivity" class="form-label">Voice Detection Sensitivity</label>
+            <div class="slider-container">
+                <input type="range" class="form-range" min="0" max="100" value="50" id="voiceSensitivity">
+                <div class="d-flex justify-content-between">
+                    <small>Low</small>
+                    <small>Medium</small>
+                    <small>High</small>
+                </div>
+            </div>
+        </div>
+        <div class="mb-3">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="continuousListening" checked>
+                <label class="form-check-label" for="continuousListening"> Enable continuous listening mode </label>
+            </div>
+            <small class="text-muted d-block mt-1">When enabled, voice recognition will continue after each command</small>
+        </div>
+    </div>
+    <div class="settings-section">
+        <h4 class="mb-3">Notifications</h4>
+        <div class="mb-3">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="soundNotifications" checked>
+                <label class="form-check-label" for="soundNotifications"> Enable sound notifications </label>
+            </div>
+        </div>
+        <div class="mb-3">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="visualNotifications" checked>
+                <label class="form-check-label" for="visualNotifications"> Enable visual notifications </label>
+            </div>
+        </div>
+    </div>
+    <div class="text-center">
+        <button id="saveSettings" class="btn btn-primary">
+            <i class="fas fa-save"></i> Save Settings </button>
+    </div>
+</div>
+<script src="lib/jquery-3.7.1.min.js"></script>
+<script src="bootstrap/bootstrap.min.js" defer></script>
+<script src="oauth.js"></script>
+<script src="tts.js"></script>
+<script src="emailProcessing.js"></script>
+<script src="voiceProcessing.js"></script>
+<script src="sendEmail.js"></script>
+<script src="settings.js"></script>
+</body>
 </html>

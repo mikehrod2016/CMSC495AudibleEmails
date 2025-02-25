@@ -1,21 +1,48 @@
 <!DOCTYPE html>
-<!-- UI for the extension -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voice Email</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles-popup.css">
+    <link rel="stylesheet" href="bootstrap/bootstrap.css">
+    <link rel="stylesheet" href="fontawesome/css/all.css">
 </head>
 <body id="popup">
-<h2>Voice-Based Email</h2>
-<p id="loginStatus">Checking login status...</p>
-<button id="openPage">Open Page</button>
-<button id="fetchEmails">Fetch Emails</button>
-<button id="startListening">Start Voice Command</button>
-<button id="stopSpeaking">Stop Voice Command</button>
-<p id="status">Click to Start</p>
-<p id="recognisedCommand">Last Command: None</p> <!-- for debugging -->
+<div class="container py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="m-0">Voice-Based Email</h2>
+        <button id="openPage" class="btn btn-sm btn-outline-secondary settings-btn" title="Settings">
+            <i class="fa-solid fa-gear"></i> Settings </button>
+    </div>
+    <div id="loginStatusCard" class="login-status-card mb-4">
+        <div class="login-indicator not-logged-in">
+            <i class="fas fa-user-circle status-icon"></i>
+        </div>
+        <p id="loginStatus" class="m-0">Checking login status...</p>
+        <button id="fetchEmails" class="btn btn-sm btn-primary fetch-btn" disabled>
+            <i class="fas fa-envelope"></i> Fetch Emails </button>
+    </div>
+    <div class="voice-controls mb-4">
+        <div class="btn-group d-flex" role="group">
+            <button id="startListening" class="btn btn-lg btn-success flex-grow-1" type="button">
+                <i class="fas fa-microphone"></i> Start Voice Command </button>
+            <button id="stopSpeaking" class="btn btn-lg btn-danger flex-grow-1" type="button">
+                <i class="fas fa-microphone-slash"></i> Stop Listening </button>
+        </div>
+    </div>
+    <div class="message-display">
+        <div class="message-header">
+            <span>Messages</span>
+        </div>
+        <div class="message-content">
+            <p id="status" class="status-message">Click to Start</p>
+            <p id="recognisedCommand" class="command-message">Last Command: None</p>
+        </div>
+    </div>
+</div>
+<script src="lib/jquery-3.7.1.min.js"></script>
+<script src="bootstrap/bootstrap.min.js" defer></script>
 <script src="oauth.js"></script>
 <script src="tts.js"></script>
 <script src="emailProcessing.js"></script>

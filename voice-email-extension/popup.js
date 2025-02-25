@@ -1,13 +1,18 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const loginStatus = document.getElementById('loginStatus');
+    const loginStatusCard = document.getElementById('loginStatusCard');
+    const fetchEmailsBtn = document.getElementById('fetchEmails');
+
     try {
         // request oauth token from background.js
         const token = await new Promise((resolve, reject) => {
-            chrome.runtime.sendMessage({ action: 'getAuthToken', interactive: true }, (response) => {
+            chrome.runtime.sendMessage({
+                action: 'getAuthToken',
+                interactive: true
+            }, (response) => {
                 if (response.error) {
                     reject(response.error); // reject if error
-                }
-                else {
+                } else {
                     resolve(response.token); // resolve with received token
                 }
             });
@@ -15,18 +20,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // fetch user profile from gmail api using received token
         const response = await fetch('https://www.googleapis.com/gmail/v1/users/me/profile', {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
         });
 
         const data = await response.json();
-        loginStatus.textContent = `Logged in as ${data.emailAddress}`;
-    }
-    catch (error) {
+        // update login status with animation
+        loginStatusCard.classList.remove('not-logged-in');
+        loginStatusCard.classList.add('logged-in');
+        loginStatus.innerHTML = `<strong>Logged in as:</strong> ${data.emailAddress}`;
+        fetchEmailsBtn.removeAttribute('disabled');
+    } catch (error) {
         console.error('Error:', error);
-        loginStatus.textContent = 'Not logged in';
+        loginStatus.innerHTML = '<strong>Not logged in</strong><br><small>Please log in to use voice commands</small>';
+        loginStatusCard.classList.add('not-logged-in');
     }
 
-    // Controls UI logic
+    // controls UI logic
     document.getElementById("fetchEmails").addEventListener("click", fetchFirstFiveEmails);
 
     // opens full-page tab
@@ -37,46 +48,76 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // get stored settings page id when popup opens
-    chrome.storage.local.get("settingsPageId"), (data) => {
+    chrome.storage.local.get(["settingsPageId", "useIcons"], (data) => {
         if (data.settingsPageId) {
             settingsPageId = data.settingsPageId;
         }
-    };
+        // apply icon display preference if set
+        if (data.useIcons !== undefined) {
+            toggleIconDisplay(data.useIcons);
+        }
+    });
 
     // store settings page id of settings.html
     let settingsPageId = null;
 
-    chrome.storage.local.get("settingsPageId", (data) => {
-        if (data.settingsPageId) {
-            settingsPageId = data.settingsPageId;
-        }
-    });
+    function toggleIconDisplay(showIcons) {
+        const icons = document.querySelectorAll('.fas');
+        icons.forEach(icon => {
+            icon.style.display = showIcons ? 'inline-block' : 'none';
+        });
+
+        // adjust button padding if icons are hidden
+        const buttons = document.querySelectorAll('.btn');
+        buttons.forEach(btn => {
+            if (!showIcons) {
+                btn.style.paddingLeft = '8px';
+                btn.style.paddingRight = '8px';
+            } else {
+                btn.style.paddingLeft = '';
+                btn.style.paddingRight = '';
+            }
+        });
+    }
 
     function openSettingsPage() {
         chrome.tabs.query({}, (tabs) => {
             let existingPage = tabs.find(tab => tab.url && tab.url.includes("settings.html"));
             if (existingPage) {
                 settingsPageId = existingPage.id;
-                chrome.storage.local.set({ settingsPageId: settingsTabId });
+                chrome.storage.local.set({
+                    settingsPageId: settingsPageId
+                });
 
-                // bring tab to focus instead of opening new one
-                chrome.tabs.update(settingsPageId, { active: true });
-            }
-            else {
-                chrome.tabs.create({ url: "settings.html" }, (tab) => {
+                // send message without activating the tab
+                chrome.tabs.sendMessage(settingsPageId, {
+                    action: "startListening"
+                });
+            } else {
+                chrome.tabs.create({
+                    url: "settings.html"
+                }, (tab) => {
                     settingsPageId = tab.id;
-                    chrome.storage.local.set({ settingsPageId: tab.id });
+                    chrome.storage.local.set({
+                        settingsPageId: tab.id
+                    });
                 });
             }
         });
     }
 
-    document.getElementById("startListening").addEventListener("click", () => {
+    document.getElementById("startListening").onclick = function(event) {
         event.preventDefault();
+        console.log("Start listening button clicked directly");
+        // add listening animation class
+        document.querySelector('.voice-controls').classList.add('listening');
+
         // check if settings.html is already open
         if (settingsPageId) {
-            // if tab exists, send message to start listening
-            chrome.tabs.sendMessage(settingsPageId, { action: "startListening" }, (response) => {
+            // send message directly without checking if tab exists first
+            chrome.tabs.sendMessage(settingsPageId, {
+                action: "startListening"
+            }, (response) => {
                 if (chrome.runtime.lastError) {
                     console.log("Settings tab not found, opening a new one.");
                     openSettingsPage();
@@ -86,12 +127,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             // open new tab if not found
             openSettingsPage();
         }
-    });
-    
+    }
 
-    document.getElementById("stopSpeaking").addEventListener("click", () => {
+    const stopSpeakingBtn = document.getElementById("stopSpeaking");
+    stopSpeakingBtn.addEventListener("click", () => {
+        // remove listening animation class
+        document.querySelector('.voice-controls').classList.remove('listening');
+
         if (settingsPageId) {
-            chrome.tabs.sendMessage(settingsPageId, { action: "stopSpeaking" });
+            chrome.tabs.sendMessage(settingsPageId, {
+                action: "stopSpeaking"
+            });
         }
     });
 
@@ -100,21 +146,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (message.action === "voiceCommand") {
             document.getElementById("status").textContent = `Heard: ${message.command}`;
             document.getElementById("recognisedCommand").textContent = `Last Command: ${message.command}`; // for debugging
-        }
-        else if (message.action === "statusUpdate") {
+            // update UI to indicate active voice recognition
+            document.querySelector('.voice-controls').classList.add('listening');
+        } else if (message.action === "statusUpdate") {
             document.getElementById("status").textContent = message.status;
-        }
-        else if (message.action === "micError") {
-            // todo: figure out why the hell this is triggering initially
-            //       once prompt is closed the voice command is processed as designed
-            
-            // alert("Microphone access denied. Enable microphone access in your browser settings.");
+        } else if (message.action === "micError") {
+            // show error in message display
+            document.getElementById("status").innerHTML = '<span style="color: #dc3545;"><i class="fas fa-exclamation-triangle"></i> Microphone access denied</span>';
+            document.getElementById("recognisedCommand").textContent = "Please enable microphone access in your browser settings";
         }
 
         // store settingsPageId if message is coming from settings.html
         if (sender.tab && sender.tab.url.includes("settings.html")) {
             settingsPageId = sender.tab.id;
-            chrome.storage.local.set({ settingsPageId: sender.tab.id });
+            chrome.storage.local.set({
+                settingsPageId: sender.tab.id
+            });
         }
     });
 
@@ -129,5 +176,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.onblur = () => {
         window.focus();
     };
-
 });

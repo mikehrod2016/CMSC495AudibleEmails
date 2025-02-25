@@ -3,11 +3,13 @@
 // get oauth token dynamically
 const getAccessToken = () => {
     return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({ action: 'getAuthToken', interactive: true }, (response) => {
+        chrome.runtime.sendMessage({
+            action: 'getAuthToken',
+            interactive: true
+        }, (response) => {
             if (response.error) {
                 reject(response.error);
-            }
-            else {
+            } else {
                 resolve(response.token);
             }
         });
@@ -20,10 +22,11 @@ let recentEmails = {};
 const fetchFirstFiveEmails = async () => {
     try {
         const token = await getAccessToken();
-        const response = await fetch("https://www.googleapis.com/gmail/v1/users/me/messages?q=is:inbox&maxResults=5",
-            {
-                headers: {'Authorization': `Bearer ${token}`}
-            });
+        const response = await fetch("https://www.googleapis.com/gmail/v1/users/me/messages?q=is:inbox&maxResults=5", {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
 
         const data = await response.json();
 
@@ -38,14 +41,20 @@ const fetchFirstFiveEmails = async () => {
 
         let fetchPromises = data.messages.map((message, index) =>
             fetch(`https://www.googleapis.com/gmail/v1/users/me/messages/${message.id}`, {
-                headers: {Authorization: `Bearer ${token}`}
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
             })
                 .then(response => response.json())
                 .then(email => {
                     let subject = email.payload.headers.find(header => header.name === "Subject")?.value || `Email ${index + 1}`;
                     let from = email.payload.headers.find(header => header.name === "From")?.value || "Unknown Sender";
                     emailSubjects.push(`${index + 1}: ${subject} from ${from}`);
-                    recentEmails[index + 1] = {id: message.id, subject, from};
+                    recentEmails[index + 1] = {
+                        id: message.id,
+                        subject,
+                        from
+                    };
                 })
         );
 
@@ -73,18 +82,19 @@ const readEmailByNumber = async (emailNumber) => {
     try {
         const token = await getAccessToken();
         const response = await fetch(`https://www.googleapis.com/gmail/v1/users/me/messages/${email.id}`, {
-                headers: {Authorization: `Bearer ${token}`}
-            });
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
 
-            const emailData = await response.json();
-            let subject = emailData.payload.headers.find(header => header.name === "Subject")?.value || "No Subject";
-            let from = emailData.payload.headers.find(header => header.name === "From")?.value || "Unknown Sender";
-            let snippet = emailData.snippet || "No message preview available.";
-            let emailText = `Email from ${from}. Subject: ${subject}. Preview: ${snippet}`;
-            console.log(emailText);
-            readTextAloud(emailText);
-    }
-    catch (error) {
+        const emailData = await response.json();
+        let subject = emailData.payload.headers.find(header => header.name === "Subject")?.value || "No Subject";
+        let from = emailData.payload.headers.find(header => header.name === "From")?.value || "Unknown Sender";
+        let snippet = emailData.snippet || "No message preview available.";
+        let emailText = `Email from ${from}. Subject: ${subject}. Preview: ${snippet}`;
+        console.log(emailText);
+        readTextAloud(emailText);
+    } catch (error) {
         console.error("Error fetching email:", error);
         readTextAloud("An error occurred while fetching the email details.");
     }
@@ -101,19 +111,19 @@ const deleteEmailByNumber = async (emailNumber) => {
         const token = await getAccessToken();
         const deleteResponse = await fetch(`https://www.googleapis.com/gmail/v1/users/me/messages/${email.id}/trash`, {
             method: "POST",
-            headers: { Authorization: `Bearer ${token}` }
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
         });
 
         if (deleteResponse.ok) {
             const confirmMessage = `The email from ${email.from} with subject "${email.subject}" has been deleted!`;
             console.log(confirmMessage);
             readTextAloud(confirmMessage);
-        }
-        else {
+        } else {
             throw new Error("Failed to delete the email.");
         }
-    }
-    catch (error) {
+    } catch (error) {
         console.error("Error deleting email:", error);
         readTextAloud("There was error while trying to delete the email.")
     }
@@ -124,7 +134,9 @@ const deleteLatestEmail = async () => {
     try {
         const token = await getAccessToken();
         const response = await fetch("https://www.googleapis.com/gmail/v1/users/me/messages?q=is:inbox&maxResults=1", {
-            headers: {Authorization: `Bearer ${token}`}
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
         });
 
         const data = await response.json();
@@ -136,7 +148,9 @@ const deleteLatestEmail = async () => {
         const latestEmailID = data.messages[0].id;
         const deleteResponse = await fetch(`https://www.googleapis.com/gmail/v1/users/me/messages/${latestEmailID}/trash`, {
             method: 'POST',
-            headers: {Authorization: `Bearer ${token}`}
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
         })
 
         if (deleteResponse.ok) {
@@ -144,8 +158,7 @@ const deleteLatestEmail = async () => {
         } else {
             throw new Error("Failed to delete the email.");
         }
-    }
-    catch (error) {
+    } catch (error) {
         console.error("Error deleting last email: ", error);
         window.readTextAloud("An error occurred while deleting email.");
     }
@@ -156,10 +169,12 @@ const markEmailAsRead = async () => {
     try {
         const token = await getAccessToken();
         const response = await fetch("https://www.googleapis.com/gmail/v1/users/me/messages?q=is:inbox&maxResults=1", {
-            headers: {Authorization: `Bearer ${token}`}
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
         });
 
-        const data = await response.json;
+        const data = await response.json();
 
         if (!data.messages || data.messages.length === 0) {
             window.readTextAloud("There are no emails to mark as read.");
@@ -168,10 +183,14 @@ const markEmailAsRead = async () => {
 
         const messageId = data.messages[0].id;
 
-        const modifyResponse = await fetch(`https://www.googleapis.com/gmail/v1/users/me/messages/${messageId / modify}`, {
+        const modifyResponse = await fetch(`https://www.googleapis.com/gmail/v1/users/me/messages/${messageId}/modify`, {
             method: "POST",
-            headers: {Authorization: `Bearer ${token}`},
-            body: JSON.stringify({removeLabelIds: ["UNREAD"]})
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                removeLabelIds: ["UNREAD"]
+            })
         });
 
         if (modifyResponse.ok) {
