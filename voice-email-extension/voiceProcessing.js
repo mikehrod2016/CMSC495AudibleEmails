@@ -70,11 +70,12 @@ const processCommand = (command) => {
 
     // map of supported commands
     const commands = {
-        "compose email": () => chrome.tabs.create({ url: "https://mail.google.com/mail/u/0/#inbox?compose=new" }),
-        "read my latest email": fetchFirstFiveEmails,
-        "delete my last email": deleteLatestEmail,
-        "mark as read": markEmailAsRead
-    };
+        "compose email": () => chrome.tabs.create({url: "https://mail.google.com/mail/u/0/#inbox?compose=new"}),
+        "read my latest email": () => window.fetchFirstFiveEmails(),
+        "stop speaking": () => window.stopTextToSpeech(),
+        "delete my last email": () => window.deleteLatestEmail(),
+        "mark as read": () => window.markEmailAsRead()
+    }
 
     // check if spoken command matches any supported commands
     const matchedCommand = Object.entries(commands).find(([key]) => command.includes(key));
@@ -82,7 +83,24 @@ const processCommand = (command) => {
     if (matchedCommand) {
         matchedCommand[1]();
     } else {
-        chrome.runtime.sendMessage({ action: "statusUpdate", status: "Command not recognized." });    }
+        // read email by number command
+        const readEmailNumber = command.match(/read email (\d+)/);
+        if (readEmailNumber && readEmailNumber[1]) {
+            const emailNumber = parseInt(readEmailNumber[1]);
+            window.readEmailByNumber(emailNumber);
+            return;
+        }
+        // delete email by number command
+        const deleteEmailNumber = command.match(/delete (\d+)/);
+        if (deleteEmailNumber && deleteEmailNumber[1]) {
+            const emailNumber = parseInt(deleteEmailNumber[1]);
+            window.deleteEmailByNumber(emailNumber);
+            return;
+        }
+
+        chrome.runtime.sendMessage({action: "statusUpdate", status: "Command not recognized."});
+        window.readTextAloud("Sorry, I didn't understand that.");
+    }
 };
 
 // listen for messages from other parts of the extension
